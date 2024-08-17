@@ -1,6 +1,4 @@
 import { useQuery } from "react-query";
-import axios1 from "../helpers/axios1";
-// import kFormatter from "../helpers/kFormat";
 import {
   LineChart,
   Line,
@@ -13,6 +11,7 @@ import {
 import dayjs from "dayjs";
 import { useState } from "react";
 import { useDebounce } from "@uidotdev/usehooks";
+import axios from "axios";
 
 export default function Chart() {
   const [symbol, setSymbol] = useState("IBM");
@@ -21,11 +20,11 @@ export default function Chart() {
   const query = useQuery({
     queryKey: [`monthly`, debouncedSymbol],
     queryFn: () =>
-      axios1.get(`/query`, {
+      axios.get(`https://www.alphavantage.co/query`, {
         params: {
           function: `TIME_SERIES_MONTHLY`,
           symbol: debouncedSymbol,
-          apikey: `RIBXT3XYLI69PC0Q`,
+          apikey: import.meta.env.VITE_ALPHAVANTAGE_APIKEY,
         },
       }),
     keepPreviousData: true,
