@@ -8,21 +8,29 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  ResponsiveContainer,
 } from "recharts";
 import dayjs from "dayjs";
+import { useState } from "react";
+import { useDebounce } from "@uidotdev/usehooks";
 
 export default function Chart() {
-  const query = useQuery(`monthly`, () =>
-    axios1.get(`/query`, {
-      params: {
-        function: `TIME_SERIES_MONTHLY`,
-        symbol: `IBM`,
-        apikey: `RIBXT3XYLI69PC0Q`,
-      },
-    })
-  );
+  const [symbol, setSymbol] = useState("IBM");
+  const debouncedSymbol = useDebounce(symbol, 300);
 
-  console.log("query.data", query.data?.data["Monthly Time Series"]);
+  const query = useQuery({
+    queryKey: [`monthly`, debouncedSymbol],
+    queryFn: () =>
+      axios1.get(`/query`, {
+        params: {
+          function: `TIME_SERIES_MONTHLY`,
+          symbol: debouncedSymbol,
+          apikey: `RIBXT3XYLI69PC0Q`,
+        },
+      }),
+    keepPreviousData: true,
+    staleTime: 1000,
+  });
 
   const dataObj = query.data?.data["Monthly Time Series"] ?? {};
   const dataArr = Object.keys(dataObj)
@@ -33,26 +41,52 @@ export default function Chart() {
       const closeNumber = parseInt(close);
 
       return {
-        date: dayjs(key).format("MMM YYYY"),
+        date: dayjs(key).format("MMM YY"),
         close: closeNumber,
       };
     });
 
-  console.log({ dataArr });
-
   return (
     <>
       <div className="p-20">
-        <h1 className="text-center font-bold text-xl">Stock App</h1>
-        <p className="mb-10">asd</p>
+        <div className="mb-10 text-center">
+          <h1 className="text-xl font-bold">Stock App</h1>
 
-        <LineChart className="mx-auto" width={1000} height={500} data={dataArr}>
-          <Line type="monotone" dataKey="close" stroke="#8884d8" />
-          <CartesianGrid stroke="#ccc" />
-          <XAxis dataKey="date" className="text-xs" />
-          <YAxis className="text-xs" />
-          <Tooltip />
-        </LineChart>
+          <p className="mb-4">
+            An application to display stock prices over the past year.
+          </p>
+
+          <form
+            className="relative inline-block"
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
+          >
+            <input
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+              type="text"
+              className="rounded border border-gray-500 px-2 py-1 text-sm"
+              placeholder="Ticker Symbol"
+            />
+
+            {query.isFetching ? (
+              <div className="absolute inset-y-0 right-2 flex items-center justify-center">
+                <div className="h-2 w-2 animate-spin rounded-full border-t border-black"></div>
+              </div>
+            ) : null}
+          </form>
+        </div>
+
+        <ResponsiveContainer width="80%" height={400} className="mx-auto">
+          <LineChart data={dataArr}>
+            <Line type="monotone" dataKey="close" stroke="#8884d8" />
+            <CartesianGrid stroke="#ccc" />
+            <XAxis dataKey="date" className="text-xs" />
+            <YAxis className="text-xs" />
+            <Tooltip />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </>
   );
