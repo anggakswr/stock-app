@@ -12,6 +12,7 @@ import dayjs from "dayjs";
 import { useState } from "react";
 import { useDebounce } from "@uidotdev/usehooks";
 import axios from "axios";
+import News from "./News";
 
 export default function Chart() {
   const [symbol, setSymbol] = useState("IBM");
@@ -27,8 +28,6 @@ export default function Chart() {
           apikey: import.meta.env.VITE_ALPHAVANTAGE_APIKEY,
         },
       }),
-    keepPreviousData: true,
-    staleTime: 1000,
   });
 
   const dataObj = query.data?.data["Monthly Time Series"] ?? {};
@@ -77,7 +76,7 @@ export default function Chart() {
           </form>
         </div>
 
-        <ResponsiveContainer width="80%" height={400} className="mx-auto">
+        <ResponsiveContainer width="80%" height={400} className="mx-auto mb-8">
           <LineChart data={dataArr}>
             <Line type="monotone" dataKey="close" stroke="#8884d8" />
             <CartesianGrid stroke="#ccc" />
@@ -86,6 +85,8 @@ export default function Chart() {
             <Tooltip />
           </LineChart>
         </ResponsiveContainer>
+
+        <News debouncedSymbol={debouncedSymbol} />
       </div>
     </>
   );
